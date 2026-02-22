@@ -12,9 +12,12 @@ import {
   CheckCircle2,
   Filter,
   CreditCard,
-  Building2
+  Building2,
+  FileDown,
+  Printer,
+  Download
 } from 'lucide-react';
-import { Supplier, Language } from '../types';
+import { Supplier, Language, CompanyInfo } from '../types';
 import { translations } from '../translations';
 
 interface SupplierManagementProps {
@@ -27,6 +30,7 @@ interface SupplierManagementProps {
   onAddCategory: (cat: string) => void;
   onDeleteCategory: (cat: string) => void;
   currentLang: Language;
+  companyInfo: CompanyInfo;
 }
 
 const SupplierManagement: React.FC<SupplierManagementProps> = ({ 
@@ -38,15 +42,17 @@ const SupplierManagement: React.FC<SupplierManagementProps> = ({
   categories,
   onAddCategory,
   onDeleteCategory,
-  currentLang
+  currentLang,
+  companyInfo
 }) => {
   const t = translations[currentLang];
+  const [searchTerm, setSearchTerm] = useState('');
   const [showFormModal, setShowFormModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [newCatName, setNewCatName] = useState('');
   const [selectedFilterCategory, setSelectedFilterCategory] = useState<string>('All');
 
@@ -118,12 +124,20 @@ const SupplierManagement: React.FC<SupplierManagementProps> = ({
         </div>
         <div className="flex gap-2">
           {canDelete && (
-            <button 
-              onClick={() => setShowCategoryModal(true)}
-              className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-all flex items-center gap-2"
-            >
-              <Tags size={18} /> {t.categories}
-            </button>
+            <>
+              <button 
+                onClick={() => setShowReportModal(true)}
+                className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-all flex items-center gap-2"
+              >
+                <FileDown size={18} /> {t.generateReport}
+              </button>
+              <button 
+                onClick={() => setShowCategoryModal(true)}
+                className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-all flex items-center gap-2"
+              >
+                <Tags size={18} /> {t.categories}
+              </button>
+            </>
           )}
           <button 
             onClick={() => { setEditingSupplier(null); setShowFormModal(true); }}
@@ -507,6 +521,92 @@ const SupplierManagement: React.FC<SupplierManagementProps> = ({
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-white/5 flex justify-end">
               <button onClick={() => setShowCategoryModal(false)} className="px-6 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg font-bold hover:bg-slate-200 transition-colors">Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Supplier Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50 dark:bg-slate-900 shrink-0 no-print">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.generateReport}</h2>
+              <div className="flex gap-2">
+                <button onClick={() => window.print()} className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 px-4 py-2 rounded-xl text-slate-700 dark:text-white font-bold text-sm hover:bg-slate-50 transition-all">
+                  <Printer size={18} /> {t.printDoc}
+                </button>
+                <button onClick={() => setShowReportModal(false)} className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors"><X size={20} className="text-slate-400" /></button>
+              </div>
+            </div>
+            
+            <div id="supplier-report" className="p-8 md:p-12 overflow-y-auto bg-white text-slate-900">
+              <div className="flex justify-between items-start mb-12">
+                <div className="flex gap-6 items-start">
+                  {companyInfo.logo && <img src={companyInfo.logo} alt="Logo" className="w-20 h-20 object-contain" />}
+                  <div>
+                    <h1 className="text-2xl font-black text-[#1a3683] leading-none mb-1">{companyInfo.nameEn}</h1>
+                    <h2 className="text-xl font-bold text-slate-400 mb-4">{companyInfo.nameZh}</h2>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Supplier Performance Report</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-400 font-bold">{new Date().toLocaleDateString()}</p>
+                  <p className="text-xs text-slate-400">Total Suppliers: {suppliers.length}</p>
+                </div>
+              </div>
+
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-y border-slate-200">
+                    <th className="py-3 px-4 font-black uppercase tracking-widest text-[#1a3683]">Supplier Name</th>
+                    <th className="py-3 px-4 font-black uppercase tracking-widest text-[#1a3683]">Category</th>
+                    <th className="py-3 px-4 font-black uppercase tracking-widest text-[#1a3683]">Quality</th>
+                    <th className="py-3 px-4 font-black uppercase tracking-widest text-[#1a3683]">Delivery</th>
+                    <th className="py-3 px-4 font-black uppercase tracking-widest text-[#1a3683]">Comm.</th>
+                    <th className="py-3 px-4 font-black uppercase tracking-widest text-[#1a3683] text-right">Overall</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {suppliers.map(s => {
+                    const rating = s.performanceMetrics ? (s.performanceMetrics.quality + s.performanceMetrics.delivery + s.performanceMetrics.communication) / 3 : 5;
+                    return (
+                      <tr key={s.id}>
+                        <td className="py-3 px-4 font-bold">{s.name}</td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[9px] font-bold uppercase tracking-wider">
+                            {s.category}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">{s.performanceMetrics?.quality || 5}/5</td>
+                        <td className="py-3 px-4">{s.performanceMetrics?.delivery || 5}/5</td>
+                        <td className="py-3 px-4">{s.performanceMetrics?.communication || 5}/5</td>
+                        <td className="py-3 px-4 text-right font-black text-[#1a3683]">{rating.toFixed(1)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              
+              <div className="mt-12 pt-8 border-t border-slate-100 grid grid-cols-2 gap-8">
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Report Summary</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Average Quality Rating:</span>
+                      <span className="font-bold">{(suppliers.reduce((acc, s) => acc + (s.performanceMetrics?.quality || 5), 0) / (suppliers.length || 1)).toFixed(1)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Average Delivery Rating:</span>
+                      <span className="font-bold">{(suppliers.reduce((acc, s) => acc + (s.performanceMetrics?.delivery || 5), 0) / (suppliers.length || 1)).toFixed(1)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end justify-end">
+                  <div className="w-48 border-b border-slate-200 mb-2"></div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Authorized Signature</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

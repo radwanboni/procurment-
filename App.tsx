@@ -314,6 +314,7 @@ const App: React.FC = () => {
               onAddCategory={(c) => setSupplierCategories([...supplierCategories, c])}
               onDeleteCategory={(c) => setSupplierCategories(supplierCategories.filter(cat => cat !== c))}
               currentLang={lang}
+              companyInfo={companyInfo}
             />
           )}
           {activeTab === 'pos' && <POManagement pos={purchaseOrders} onView={(p) => { setSelectedPO(p); setActiveTab('view-po'); }} onCreate={() => setActiveTab('new-po')} currentLang={lang} />}
